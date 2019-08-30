@@ -382,7 +382,7 @@ chmod +x /root/wtc_certbot_dryrun.sh
   echo "  --email ${ALERTS_EMAIL} \\"
   echo "  --no-eff-email \\"
   echo "  -d ${SITE_URL} \\"
-  echo " $(printf "-d %s" "${SITE_ALIASES[@]}")"
+  echo " $(printf " -d %s" "${SITE_ALIASES[@]}")"
 } > /root/wtc_certbot_live.sh
 
 chmod +x /root/wtc_certbot_live.sh
