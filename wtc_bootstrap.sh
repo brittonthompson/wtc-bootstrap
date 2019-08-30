@@ -15,17 +15,18 @@ WTC_HEADER=$7
 WTC_HEADER_VALUE=$8
 DOCKER_REGISTRY=$9
 WORDPRESS_VERSION=${10}
-
-if [ "${11}" ]; then
-  NEW_SITE=${11}
-fi
+ALERTS_EMAIL=${11}
 
 if [ "${12}" ]; then
-  SSL_ENABLED=${12}
+  NEW_SITE=${12}
 fi
 
 if [ "${13}" ]; then
-  PROXY_REDIRECT=${13}
+  SSL_ENABLED=${13}
+fi
+
+if [ "${14}" ]; then
+  PROXY_REDIRECT=${14}
 fi
 
 if [ -z "$SITE_ALIASES" ]; then
@@ -247,13 +248,9 @@ EOF
   echo "server {"
   echo "  listen 80;"
   echo "  server_name $(printf " %s" "${SITE_ALIASES[@]}");"
-  echo "  root /var/www/html;"
+  echo "  root /var/www/${SITE_URL};"
   echo "  index index.html index.htm;"
   echo "  client_max_body_size 2048m;"
-  if [ "$HTTP_REDIRECT" ]; then
-      echo ""
-      echo "  return 301 https://\$server_name\$request_uri;"
-  fi
   echo ""
   echo "  #Set the VPC DNS server and disable IPv6 so the upstream endpoing is resolved for every proxy pass"
   echo "  resolver 1.1.1.1 8.8.8.8 ipv6=off;"
@@ -263,6 +260,10 @@ EOF
   echo "    allow all;"
   echo "    root  /data/letsencrypt/;"
   echo "  }"
+  if [ "$HTTP_REDIRECT" ]; then
+      echo ""
+      echo "  return 301 https://\$server_name\$request_uri;"
+  fi
   echo ""
   echo "  location / {"
   echo "    proxy_pass http://\$upstream_endpoint;"
@@ -282,12 +283,12 @@ EOF
   echo ""
   if [ "$SSL_ENABLED" ]; then
       echo "server {"
+      echo "  listen 443 ssl http2;"
       echo "  server_name $(printf " %s" "${SITE_ALIASES[@]}");"
-      echo "  root /var/www/html;"
+      echo "  root /var/www/${SITE_URL};"
       echo "  index index.html index.htm;"
       echo "  client_max_body_size 2048m;"
       echo ""
-      echo "  ssl on;"
       echo "  ssl_certificate /etc/letsencrypt/live/${SITE_URL}/fullchain.pem;"
       echo "  ssl_certificate_key /etc/letsencrypt/live/${SITE_URL}/privkey.pem;"
       echo "  ssl_session_cache shared:SSL:50m;"
