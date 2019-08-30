@@ -322,7 +322,7 @@ EOF
       echo "  }"
       echo "}"
   fi
-} > $1
+} > /etc/nginx/conf.d/${SITE_URL}.conf
 
 
 #----------------- Create a temporary certificate so NGINX can start
