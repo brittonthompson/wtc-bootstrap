@@ -122,7 +122,7 @@ EOF
   echo "  CustomLog /var/log/apache2/${SITE_URL}.access.log combined"
   echo
   echo "  # Check a HTTP header for our custom CloudFront header to allow only connections from CloudFront"
-  echo "  <If \"%{HTTP:${WTC_HEADER}} in { "${WTC_HEADER_VALUE}" }\">"
+  echo "  <If \"%{HTTP:${WTC_HEADER}} in { \"${WTC_HEADER_VALUE}\" }\">"
   echo "    Require all granted"
   echo "  </If>"
   echo "  <Else>"
