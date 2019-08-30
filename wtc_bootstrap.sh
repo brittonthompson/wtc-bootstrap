@@ -29,7 +29,7 @@ if [ "${13}" ]; then
 fi
 
 if [ -z "$SITE_ALIASES" ]; then
-  $SITE_ALIASES=($SITE_URL)
+  SITE_ALIASES=($SITE_URL)
 fi
 
 #----------------- Install applications
