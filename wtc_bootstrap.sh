@@ -260,12 +260,12 @@ EOF
   echo "    allow all;"
   echo "    root  /data/letsencrypt/;"
   echo "  }"
-  if [ "$HTTP_REDIRECT" ]; then
-      echo ""
-      echo "  return 301 https://\$server_name\$request_uri;"
-  fi
   echo ""
   echo "  location / {"
+  if [ "$HTTP_REDIRECT" ]; then
+    echo ""
+    echo "    return 301 https://\$server_name\$request_uri;"
+  fi
   echo "    proxy_pass http://\$upstream_endpoint;"
   echo "    proxy_set_header  host              \$host;"
   echo "    proxy_set_header  x-real-ip         \$remote_addr;"
@@ -317,10 +317,10 @@ EOF
       echo "    proxy_set_header  x-forwarded-proto \$scheme;"
       echo "    proxy_pass_header Authorization;"
       if [ "$PROXY_REDIRECT" ]; then
-          echo ""
-          echo "      location ~ ^/\$ {"
-          echo "          return 301 $PROXY_REDIRECT;"
-          echo "      }"
+        echo ""
+        echo "      location ~ ^/\$ {"
+        echo "          return 301 $PROXY_REDIRECT;"
+        echo "      }"
       fi
       echo "  }"
       echo "}"
