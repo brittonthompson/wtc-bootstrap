@@ -349,7 +349,7 @@ docker run --network host --name nginx --restart always -v /root/certs-data:/dat
 #----------------- New site setup
 if [ "$NEW_SITE" ]; then
   #Establishing a new site, copy over the Wordpress files
-  cp -R /var/www/html /var/www/${SITE_URL}
+  cp -R /var/www/html/ /var/www/${SITE_URL}
 
   #Update the permissions for the copied data
   chown -R www-data:www-data /var/www/${SITE_URL}
