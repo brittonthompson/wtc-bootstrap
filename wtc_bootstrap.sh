@@ -113,8 +113,10 @@ cat > /var/www/html_wtc/index.php <<-'EOF'
 </html>
 EOF
 
-#----------------- Enable the default site
 ln -s /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-enabled/000-default.conf
+
+chown -R www-data:www-data /var/www/html_wtc
+find /var/www/html_wtc -type f -exec chmod 644 {} + -o -type d -exec chmod 755 {} +
 
 {
   echo "<VirtualHost *:80>"
@@ -125,7 +127,7 @@ ln -s /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-enabled/0
   echo "  CustomLog /var/log/apache2/${SITE_URL}.access.log combined"
   echo
   echo "  # Check a HTTP header for our custom CloudFront header to allow only connections from CloudFront"
-  echo "  <If \"%{HTTP:${WTC_HEADER}} in { \'${WTC_HEADER_VALUE}\' }\">"
+  echo "  <If \"%{HTTP:${WTC_HEADER}} in { '${WTC_HEADER_VALUE}' }\">"
   echo "    Require all granted"
   echo "  </If>"
   echo "  <Else>"
@@ -352,15 +354,11 @@ docker run --network host --name nginx --restart always -v /root/certs-data:/dat
 #----------------- New site setup
 if [ "$NEW_SITE" ]; then
   #Establishing a new site, copy over the Wordpress files
-  cp -R /var/www/html/ /var/www/${SITE_URL}
+  cp -R /var/www/html/* /var/www/${SITE_URL}
 
   #Update the permissions for the copied data
   chown -R www-data:www-data /var/www/${SITE_URL}
   find /var/www/${SITE_URL} -type f -exec chmod 644 {} + -o -type d -exec chmod 755 {} +
-
-  #Default site
-  chown -R www-data:www-data /var/www/html_wtc
-  find /var/www/html_wtc -type f -exec chmod 644 {} + -o -type d -exec chmod 755 {} +
 fi
 
 
