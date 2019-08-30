@@ -1,38 +1,5 @@
 #!/bin/bash
 
-#----------------- Instructions
-#Pass the below variables as arguments in order
-# ./wtc_bootstrap.sh "siteurl" "sitealias1 sitealias2" "true" "id.cloudfront.net" "accesskey" "secretkey"...
-
-#----------------- Configuration variables
-SITE_URL=$1
-SITE_ALIASES=($2)
-HTTP_REDIRECT=$3
-PROXY_PASS=$4
-AWS_ACCESS_KEY=$5
-AWS_SECRET_KEY=$6
-WTC_HEADER=$7
-WTC_HEADER_VALUE=$8
-DOCKER_REGISTRY=$9
-WORDPRESS_VERSION=${10}
-ALERTS_EMAIL=${11}
-
-if [ "${12}" ]; then
-  NEW_SITE=${12}
-fi
-
-if [ "${13}" ]; then
-  SSL_ENABLED=${13}
-fi
-
-if [ "${14}" ]; then
-  PROXY_REDIRECT=${14}
-fi
-
-if [ -z "$SITE_ALIASES" ]; then
-  SITE_ALIASES=($SITE_URL)
-fi
-
 #----------------- Install applications
 export DEBIAN_FRONTEND=noninteractive
 apt update -y
