@@ -347,6 +347,7 @@ fi
 chmod +x /root/wtc_certbot_dryrun.sh
 
 {
+  echo "rm -rf /etc/letsencrypt/live/${SITE_URL}"
   echo "certbot certonly --webroot -w /root/certs-data/ \\"
   echo "  --allow-subset-of-names \\"
   echo "  --keep-until-expiring \\"
