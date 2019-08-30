@@ -367,9 +367,11 @@ fi
   echo "  --email ${ALERTS_EMAIL} \\"
   echo "  --no-eff-email \\"
   echo "  -d ${SITE_URL} \\"
-  echo "  $(printf " -d %s" "${SITE_ALIASES[@]}") \\"
+  echo " $(printf " -d %s" "${SITE_ALIASES[@]}") \\"
   echo "  --dry-run"
 } > /root/wtc_certbot_dryrun.sh
+
+chmod +x /root/wtc_certbot_dryrun.sh
 
 {
   echo "certbot certonly --webroot -w /root/certs-data/ \\"
@@ -380,7 +382,11 @@ fi
   echo "  --email ${ALERTS_EMAIL} \\"
   echo "  --no-eff-email \\"
   echo "  -d ${SITE_URL} \\"
-  echo "  $(printf " -d %s" "${SITE_ALIASES[@]}") \\"
+  echo " $(printf "-d %s" "${SITE_ALIASES[@]}")"
 } > /root/wtc_certbot_live.sh
 
+chmod +x /root/wtc_certbot_live.sh
+
 echo '(crontab -l && echo "0 */12 * * * certbot renew") | crontab -' > /root/wtc_certbot_schedule.sh
+
+chmod +x /root/wtc_certbot_schedule.sh
