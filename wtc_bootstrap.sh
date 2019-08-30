@@ -17,11 +17,15 @@ DOCKER_REGISTRY=$9
 WORDPRESS_VERSION=${10}
 
 if [ "${11}" ]; then
-  SSL_ENABLED=${11}
+  NEW_SITE=${11}
 fi
 
 if [ "${12}" ]; then
-  PROXY_REDIRECT=${12}
+  SSL_ENABLED=${12}
+fi
+
+if [ "${13}" ]; then
+  PROXY_REDIRECT=${13}
 fi
 
 if [ -z "$SITE_ALIASES" ]; then
@@ -53,12 +57,16 @@ sed -i "s/preserve_hostname: true/preserve_hostname: false/g" /etc/cloud/cloud.c
 
 #----------------- Make all the required directories
 mkdir -p /var/www/html
+mkdir -p /var/www/html_wtc
 mkdir -p /var/www/${SITE_URL}
 mkdir -p /etc/apache2/sites-available
 mkdir -p /etc/apache2/sites-enabled
 mkdir -p /etc/nginx/conf.d
 mkdir -p /root/.aws
 mkdir -p /etc/php/conf.d
+if [ "$SSL_ENABLED"]; then
+  mkdir -p /etc/letsencrypt/live/${SITE_URL}
+fi
 
 
 #----------------- Create the aws credentials file and config
@@ -83,10 +91,26 @@ $(aws ecr get-login --no-include-email --region us-east-1)
 cat > /etc/apache2/sites-available/000-default.conf <<-'EOF'
 <VirtualHost *:80>
   ServerAdmin webmaster@localhost
-  DocumentRoot /var/www/html
+  DocumentRoot /var/www/html_wtc
   ErrorLog /var/log/apache2/error.log
   CustomLog /var/log/apache2/access.log combined
 </VirtualHost>
+EOF
+
+cat > /var/www/html_wtc/index.php <<-'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title></title>
+</head>
+<body>
+  <div style="margin:10px auto; text-align: center; width:918px; clear:both; padding:8px; font-family:sans-serif; border: 1px solid #ccc; background-color: #e1e1e1">
+    <?php echo gethostname(); ?>
+  </div>
+	<?php phpinfo(); ?>
+</body>
+</html>
 EOF
 
 {
@@ -120,7 +144,6 @@ EOF
   echo "  </Directory>"
   echo "</VirtualHost>"
 } > /etc/apache2/sites-available/${SITE_URL}.conf
-
 
 #----------------- Enable the new site
 ln -s /etc/apache2/sites-available/${SITE_URL}.conf /etc/apache2/sites-enabled/${SITE_URL}.conf
@@ -299,6 +322,13 @@ EOF
 } > $1
 
 
+#----------------- Create a temporary certificate so NGINX can start
+if [ "$SSL_ENABLED"]; then
+  cp /etc/ssl/certs/ssl-cert-snakeoil.pem /etc/letsencrypt/live/${SITE_URL}/fullchain.pem
+  cp /etc/ssl/private/ssl-cert-snakeoil.key /etc/letsencrypt/live/${SITE_URL}/privkey.pem
+fi
+
+
 #----------------- PHP adjustments
 cat > /etc/php/conf.d/uploads.ini <<-'EOF'
 file_uploads = On
@@ -314,6 +344,17 @@ docker run --network host --name proftpd --restart always -e PROFTPD_MASQUERADE_
 docker run --network host --name postfix --restart always -d ${DOCKER_REGISTRY}/postfix
 docker run --name wordpress --restart always -p 8080:80 -v /var/www/html:/var/www/html -v /var/www:/var/www -v /etc/php/conf.d/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini -v /etc/apache2/sites-available:/etc/apache2/sites-available -v /etc/apache2/sites-enabled:/etc/apache2/sites-enabled -td wordpress:${WORDPRESS_VERSION}
 docker run --network host --name nginx --restart always -v /root/certs-data:/data/letsencrypt -v /etc/letsencrypt:/etc/letsencrypt -v /etc/nginx/conf.d:/etc/nginx/conf.d -v /etc/nginx/nginx.conf:/etc/nginx/nginx.conf:ro -v /etc/ssl/certs/ssl-cert-snakeoil.pem:/etc/ssl/certs/ssl-cert-snakeoil.pem:ro -v /etc/ssl/private/ssl-cert-snakeoil.key:/etc/ssl/private/ssl-cert-snakeoil.key:ro -td nginx
+
+
+#----------------- New site setup
+if [ "$NEW_SITE" ]; then
+  #Establishing a new site, copy over the Wordpress files
+  cp -R /var/www/html /var/www/${SITE_URL}
+
+  #Update the permissions for the copied data
+  chown -R www-data:www-data /var/www/${SITE_URL}
+  find /var/www/${SITE_URL} -type f -exec chmod 644 {} + -o -type d -exec chmod 755 {} +
+fi
 
 
 #----------------- Create the certbot command scripts
