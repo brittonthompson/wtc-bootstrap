@@ -323,7 +323,7 @@ EOF
 
 
 #----------------- Create a temporary certificate so NGINX can start
-if [ "$SSL_ENABLED"]; then
+if [ "$SSL_ENABLED" ]; then
   cp /etc/ssl/certs/ssl-cert-snakeoil.pem /etc/letsencrypt/live/${SITE_URL}/fullchain.pem
   cp /etc/ssl/private/ssl-cert-snakeoil.key /etc/letsencrypt/live/${SITE_URL}/privkey.pem
 fi
