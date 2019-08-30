@@ -113,6 +113,9 @@ cat > /var/www/html_wtc/index.php <<-'EOF'
 </html>
 EOF
 
+#----------------- Enable the default site
+ln -s /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-enabled/000-default.conf
+
 {
   echo "<VirtualHost *:80>"
   echo "  ServerName ${SITE_URL}"
@@ -122,7 +125,7 @@ EOF
   echo "  CustomLog /var/log/apache2/${SITE_URL}.access.log combined"
   echo
   echo "  # Check a HTTP header for our custom CloudFront header to allow only connections from CloudFront"
-  echo "  <If \"%{HTTP:${WTC_HEADER}} in { \"${WTC_HEADER_VALUE}\" }\">"
+  echo "  <If \"%{HTTP:${WTC_HEADER}} in { \'${WTC_HEADER_VALUE}\' }\">"
   echo "    Require all granted"
   echo "  </If>"
   echo "  <Else>"
@@ -354,6 +357,10 @@ if [ "$NEW_SITE" ]; then
   #Update the permissions for the copied data
   chown -R www-data:www-data /var/www/${SITE_URL}
   find /var/www/${SITE_URL} -type f -exec chmod 644 {} + -o -type d -exec chmod 755 {} +
+
+  #Default site
+  chown -R www-data:www-data /var/www/html_wtc
+  find /var/www/html_wtc -type f -exec chmod 644 {} + -o -type d -exec chmod 755 {} +
 fi
 
 
