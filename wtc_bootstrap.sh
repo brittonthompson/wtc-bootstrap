@@ -406,9 +406,10 @@ chmod +x /root/wtc_acm_import.sh
 
 {
   echo "check file certificate with path /etc/letsencrypt/live/${SITE_URL}/fullchain.pem"
-  echo "    if changed checksum then exec '/root/wtc_acm_import.sh'"
+  echo "    if changed checksum then exec \"/root/wtc_acm_import.sh\""
 } > /etc/monit/conf.d/certificate.monitrc
 
+service monit restart
 
 #----------------- Persist env
 echo "export SITE_URL=${SITE_URL}" >> ~/.bashrc
