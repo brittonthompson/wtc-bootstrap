@@ -3,7 +3,7 @@
 #----------------- Install applications
 export DEBIAN_FRONTEND=noninteractive
 apt update -y
-apt install -y docker.io python3 python3-pip certbot awscli git ssl-cert
+apt install -y docker.io python3 python3-pip certbot awscli git ssl-cert jq monit
 
 
 #----------------- Enable the Docker daemon
@@ -296,10 +296,10 @@ EOF
 
 
 #----------------- Create a temporary certificate so NGINX can start
-if [ "$SSL_ENABLED" ]; then
-  cp /etc/ssl/certs/ssl-cert-snakeoil.pem /etc/letsencrypt/live/${SITE_URL}/fullchain.pem
-  cp /etc/ssl/private/ssl-cert-snakeoil.key /etc/letsencrypt/live/${SITE_URL}/privkey.pem
-fi
+#if [ "$SSL_ENABLED" ]; then
+#  cp /etc/ssl/certs/ssl-cert-snakeoil.pem /etc/letsencrypt/live/${SITE_URL}/fullchain.pem
+#  cp /etc/ssl/private/ssl-cert-snakeoil.key /etc/letsencrypt/live/${SITE_URL}/privkey.pem
+#fi
 
 
 #----------------- PHP adjustments
@@ -364,3 +364,46 @@ chmod +x /root/wtc_certbot_live.sh
 echo '(crontab -l && echo "0 */12 * * * certbot renew") | crontab -' > /root/wtc_certbot_schedule.sh
 
 chmod +x /root/wtc_certbot_schedule.sh
+
+
+#----------------- Certificate manager import scripts and monit
+cat > /root/wtc_acm_import.sh <<-'EOF'
+#!/bin/bash
+
+SITE=$SITE_URL
+
+if [ "$ACM_ARN" ]; then
+  aws acm import-certificate \
+    --certificate-arn $ACM_ARN \
+    --certificate file:///etc/letsencrypt/live/${SITE}/cert.pem \
+    --private-key file:///etc/letsencrypt/live/${SITE}/privkey.pem \
+    --certificate-chain file:///etc/letsencrypt/live/${SITE}/chain.pem
+else
+  arn=`aws acm import-certificate \
+    --certificate file:///etc/letsencrypt/live/${SITE}/cert.pem \
+    --private-key file:///etc/letsencrypt/live/${SITE}/privkey.pem \
+    --certificate-chain file:///etc/letsencrypt/live/${SITE}/chain.pem`
+    
+  arn=`echo $arn | jq -r '.CertificateArn'`
+
+  if [ "$arn" ]; then
+    echo $arn
+    export ACM_ARN=${arn}
+    echo "export ACM_ARN=${arn}" >> ~/.bashrc
+  fi
+fi
+
+docker restart nginx
+EOF
+
+chmod +x /root/wtc_acm_import.sh
+
+{
+  echo "check file certificate with path /etc/letsencrypt/live/${SITE_URL}/cert.pem"
+  echo "    if changed checksum then exec '/root/wtc_acm_import.sh'"
+} > /etc/monit/conf.d/certificate.monitrc
+
+
+#----------------- Persist env
+echo "export SITE_URL=${SITE_URL}" >> ~/.bashrc
+echo "export SITE_ALIASES=${SITE_ALIASES}" >> ~/.bashrc
