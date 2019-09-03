@@ -301,10 +301,10 @@ EOF
 
 
 #----------------- Create a temporary certificate so NGINX can start
-#if [ "$SSL_ENABLED" ]; then
-#  cp /etc/ssl/certs/ssl-cert-snakeoil.pem /etc/letsencrypt/live/${SITE_URL}/fullchain.pem
-#  cp /etc/ssl/private/ssl-cert-snakeoil.key /etc/letsencrypt/live/${SITE_URL}/privkey.pem
-#fi
+if [ "$SSL_ENABLED" ]; then
+  cp /etc/ssl/certs/ssl-cert-snakeoil.pem /etc/letsencrypt/live/${SITE_URL}/fullchain.pem
+  cp /etc/ssl/private/ssl-cert-snakeoil.key /etc/letsencrypt/live/${SITE_URL}/privkey.pem
+fi
 
 
 #----------------- PHP adjustments
@@ -337,6 +337,7 @@ fi
 
 #----------------- Create the certbot command scripts
 {
+  echo "rm -rf /etc/letsencrypt/live/${SITE_URL}"
   echo "certbot certonly --webroot -w /root/certs-data/ \\"
   echo "  --allow-subset-of-names \\"
   echo "  --keep-until-expiring \\"
@@ -404,7 +405,7 @@ EOF
 chmod +x /root/wtc_acm_import.sh
 
 {
-  echo "check file certificate with path /etc/letsencrypt/live/${SITE_URL}/cert.pem"
+  echo "check file certificate with path /etc/letsencrypt/live/${SITE_URL}/fullchain.pem"
   echo "    if changed checksum then exec '/root/wtc_acm_import.sh'"
 } > /etc/monit/conf.d/certificate.monitrc
 
