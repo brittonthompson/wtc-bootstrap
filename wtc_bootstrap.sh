@@ -353,60 +353,87 @@ fi
 chmod +x /root/wtc_certbot_dryrun.sh
 
 {
-  echo "rm -rf /etc/letsencrypt/live/${SITE_URL}"
-  echo "certbot certonly --webroot -w /root/certs-data/ \\"
-  echo "  --allow-subset-of-names \\"
-  echo "  --keep-until-expiring \\"
-  echo "  --expand \\"
-  echo "  --agree-tos \\"
-  echo "  --email ${ALERTS_EMAIL} \\"
-  echo "  --no-eff-email \\"
-  echo "  -d ${SITE_URL} \\"
-  echo " $(printf " -d %s" "${SITE_ALIASES[@]}")"
+  echo "if [ ! -e /etc/letsencrypt/live/${SITE_URL} ]; then"
+  echo "  certbot certonly --webroot -w /root/certs-data/ \\"
+  echo "    --allow-subset-of-names \\"
+  echo "    --keep-until-expiring \\"
+  echo "    --expand \\"
+  echo "    --agree-tos \\"
+  echo "    --email ${ALERTS_EMAIL} \\"
+  echo "    --no-eff-email \\"
+  echo "    -d ${SITE_URL} \\"
+  echo "   $(printf " -d %s" "${SITE_ALIASES[@]}")"
+  echo "else"
+  echo "  echo 'The /etc/letsencrypt/live/${SITE_URL} folder exists.'"
+  echo "  echo 'If this is the first time this has run on this machine, use the wtc_certbot_dryrun.sh script first.'"
+  echo "  echo 'Otherwise, you should use certbot renew command to keep from jacking up the Lets Encrypt directories.'"
+  echo "fi"
 } > /root/wtc_certbot_live.sh
 
 chmod +x /root/wtc_certbot_live.sh
 
-echo '(crontab -l && echo "0 */12 * * * certbot renew") | crontab -' > /root/wtc_certbot_schedule.sh
+echo 'echo "0 */12 * * * certbot renew" | crontab -' > /root/wtc_certbot_schedule.sh
 
 chmod +x /root/wtc_certbot_schedule.sh
 
 
 #----------------- Certificate manager import scripts and monit
+
 cat > /root/wtc_acm_import.sh <<-'EOF'
 #!/bin/bash
 
-SITE=$SITE_URL
+echo "#== CERT IMPORT: `TZ=America/New_York date`"
 
+#----------------- Import variables
+if [ -e ~/wtc_envs.sh ]; then
+  . wtc_envs.sh
+  echo " -- SITE_URL=${SITE_URL}"
+  echo " -- ACM_ARN=${ACM_ARN}"
+fi
+
+echo " -- Certificate update"
 if [ "$ACM_ARN" ]; then
+  echo " -- Updating certificate ${ACM_ARN}"
   aws acm import-certificate \
     --certificate-arn $ACM_ARN \
-    --certificate file:///etc/letsencrypt/live/${SITE}/cert.pem \
-    --private-key file:///etc/letsencrypt/live/${SITE}/privkey.pem \
-    --certificate-chain file:///etc/letsencrypt/live/${SITE}/chain.pem
+    --certificate file:///etc/letsencrypt/live/${SITE_URL}/cert.pem \
+    --private-key file:///etc/letsencrypt/live/${SITE_URL}/privkey.pem \
+    --certificate-chain file:///etc/letsencrypt/live/${SITE_URL}/chain.pem
 else
+  echo " -- Adding certificate to ACM"
   arn=`aws acm import-certificate \
-    --certificate file:///etc/letsencrypt/live/${SITE}/cert.pem \
-    --private-key file:///etc/letsencrypt/live/${SITE}/privkey.pem \
-    --certificate-chain file:///etc/letsencrypt/live/${SITE}/chain.pem`
+    --certificate file:///etc/letsencrypt/live/${SITE_URL}/cert.pem \
+    --private-key file:///etc/letsencrypt/live/${SITE_URL}/privkey.pem \
+    --certificate-chain file:///etc/letsencrypt/live/${SITE_URL}/chain.pem`
     
   arn=`echo $arn | jq -r '.CertificateArn'`
 
   if [ "$arn" ]; then
-    echo $arn
+    echo " -- New certificate arn is ${arn}"
     export ACM_ARN=${arn}
     echo "export ACM_ARN=${arn}" >> ~/.bashrc
+    echo "export ACM_ARN=${arn}" > ~/wtc_envs.sh
+    echo "export SITE_URL=${SITE_URL}" >> ~/wtc_envs.sh
   fi
 fi
 
+echo " -- Restarting NGINX"
 docker restart nginx
 EOF
 
 chmod +x /root/wtc_acm_import.sh
 
 {
+  echo "#!/bin/bash"
+  echo "SITE_URL=${SITE_URL}"
+  echo "ACM_ARN=${ACM_ARN}"
+} > /root/wtc_envs.sh
+
+chmod +x /root/wtc_envs.sh
+
+{
   echo "check file certificate with path /etc/letsencrypt/live/${SITE_URL}/fullchain.pem"
-  echo "    if changed checksum then exec \"/root/wtc_acm_import.sh\""
+  echo "    if changed checksum then exec \"/bin/bash -c /root/wtc_acm_import.sh >>/var/log/wtc_acm_import.log\""
 } > /etc/monit/conf.d/certificate.monitrc
 
 service monit restart
