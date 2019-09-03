@@ -1,5 +1,10 @@
 #!/bin/bash
 
+#----------------- Import variables
+if [ -e "wtc_env.sh" ]; then
+  . wtc_env.sh
+fi
+
 #----------------- Install applications
 export DEBIAN_FRONTEND=noninteractive
 apt update -y
@@ -406,4 +411,4 @@ chmod +x /root/wtc_acm_import.sh
 
 #----------------- Persist env
 echo "export SITE_URL=${SITE_URL}" >> ~/.bashrc
-echo "export SITE_ALIASES=${SITE_ALIASES}" >> ~/.bashrc
+echo "export SITE_ALIASES=($(echo ${SITE_ALIASES[@]}))" >> ~/.bashrc
