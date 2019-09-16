@@ -316,18 +316,23 @@ post_max_size = 256M
 max_execution_time = 600
 EOF
 
+cat > /etc/php/conf.d/mail.ini <<-'EOF'
+sendmail_path = "/usr/sbin/sendmail -t -i"
+mail.log = /var/log/phpmail.log
+EOF
+
 
 #----------------- Launch docker containers
 docker run --network host --name proftpd --restart always -e PROFTPD_MASQUERADE_ADDRESS=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4) -v /var/www:/var/www -td ${DOCKER_REGISTRY}/proftpd
-docker run --network host --name postfix --restart always -d ${DOCKER_REGISTRY}/postfix
-docker run --name wordpress --restart always -p 8080:80 -v /var/www/html:/var/www/html -v /var/www:/var/www -v /etc/php/conf.d/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini -v /etc/apache2/sites-available:/etc/apache2/sites-available -v /etc/apache2/sites-enabled:/etc/apache2/sites-enabled -td wordpress:${WORDPRESS_VERSION}
+#docker run --network host --name postfix --restart always -d ${DOCKER_REGISTRY}/postfix
+docker run --name wordpress --restart always -p 8080:80 -v /var/www/html:/var/www/html -v /var/www:/var/www -v /etc/php/conf.d/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini -v /etc/php/conf.d/mail.ini:/usr/local/etc/php/conf.d/mail.ini -v /etc/apache2/sites-available:/etc/apache2/sites-available -v /etc/apache2/sites-enabled:/etc/apache2/sites-enabled -v /var/log:/var/log -td ${DOCKER_REGISTRY}/wordpress:${WORDPRESS_VERSION}
 docker run --network host --name nginx --restart always -v /root/certs-data:/data/letsencrypt -v /etc/letsencrypt:/etc/letsencrypt -v /etc/nginx/conf.d:/etc/nginx/conf.d -v /etc/nginx/nginx.conf:/etc/nginx/nginx.conf:ro -v /etc/ssl/certs/ssl-cert-snakeoil.pem:/etc/ssl/certs/ssl-cert-snakeoil.pem:ro -v /etc/ssl/private/ssl-cert-snakeoil.key:/etc/ssl/private/ssl-cert-snakeoil.key:ro -td nginx
 
 
 #----------------- New site setup
 if [ "$NEW_SITE" ]; then
   #Establishing a new site, copy over the Wordpress files
-  cp -R /var/www/html/* /var/www/${SITE_URL}
+  cp -R /var/www/html/ /var/www/${SITE_URL}
 
   #Update the permissions for the copied data
   chown -R www-data:www-data /var/www/${SITE_URL}
