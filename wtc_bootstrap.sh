@@ -438,7 +438,7 @@ echo "export SITE_ALIASES=($(echo ${SITE_ALIASES[@]}))" >> ~/.bashrc
 #----------------- New site setup
 if [ "$NEW_SITE" ]; then
   #Establishing a new site, copy over the Wordpress files
-  cp -R /var/www/html/* /var/www/${SITE_URL}
+  rsync -au /var/www/html/ /var/www/${SITE_URL}
 
   #Update the permissions for the copied data
   chown -R www-data:www-data /var/www/${SITE_URL}
