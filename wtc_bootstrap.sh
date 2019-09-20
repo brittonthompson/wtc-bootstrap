@@ -328,18 +328,6 @@ docker run --network host --name proftpd --restart always -e PROFTPD_MASQUERADE_
 docker run --name wordpress --restart always -p 8080:80 -v /var/www/html:/var/www/html -v /var/www:/var/www -v /etc/php/conf.d/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini -v /etc/php/conf.d/mail.ini:/usr/local/etc/php/conf.d/mail.ini -v /etc/apache2/sites-available:/etc/apache2/sites-available -v /etc/apache2/sites-enabled:/etc/apache2/sites-enabled -v /var/log:/var/log -td ${DOCKER_REGISTRY}/wordpress:${WORDPRESS_VERSION}
 docker run --network host --name nginx --restart always -v /root/certs-data:/data/letsencrypt -v /etc/letsencrypt:/etc/letsencrypt -v /etc/nginx/conf.d:/etc/nginx/conf.d -v /etc/nginx/nginx.conf:/etc/nginx/nginx.conf:ro -v /etc/ssl/certs/ssl-cert-snakeoil.pem:/etc/ssl/certs/ssl-cert-snakeoil.pem:ro -v /etc/ssl/private/ssl-cert-snakeoil.key:/etc/ssl/private/ssl-cert-snakeoil.key:ro -td nginx
 
-
-#----------------- New site setup
-if [ "$NEW_SITE" ]; then
-  #Establishing a new site, copy over the Wordpress files
-  cp -R /var/www/html/ /var/www/${SITE_URL}
-
-  #Update the permissions for the copied data
-  chown -R www-data:www-data /var/www/${SITE_URL}
-  find /var/www/${SITE_URL} -type f -exec chmod 644 {} + -o -type d -exec chmod 755 {} +
-fi
-
-
 #----------------- Create the certbot command scripts
 {
   echo "rm -rf /etc/letsencrypt/live/${SITE_URL}"
@@ -446,3 +434,13 @@ service monit restart
 #----------------- Persist env
 echo "export SITE_URL=${SITE_URL}" >> ~/.bashrc
 echo "export SITE_ALIASES=($(echo ${SITE_ALIASES[@]}))" >> ~/.bashrc
+
+#----------------- New site setup
+if [ "$NEW_SITE" ]; then
+  #Establishing a new site, copy over the Wordpress files
+  cp -R /var/www/html/* /var/www/${SITE_URL}
+
+  #Update the permissions for the copied data
+  chown -R www-data:www-data /var/www/${SITE_URL}
+  find /var/www/${SITE_URL} -type f -exec chmod 644 {} + -o -type d -exec chmod 755 {} +
+fi
