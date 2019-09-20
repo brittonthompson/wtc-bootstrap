@@ -256,7 +256,7 @@ EOF
   if [ "$SSL_ENABLED" ]; then
       echo "server {"
       echo "  listen 443 ssl http2;"
-      echo "  server_name $(printf " %s" "${SITE_ALIASES[@]}");"
+      echo "  server_name ${SITE_URL}$(printf " %s" "${SITE_ALIASES[@]}");"
       echo "  root /var/www/${SITE_URL};"
       echo "  index index.html index.htm;"
       echo "  client_max_body_size 2048m;"
