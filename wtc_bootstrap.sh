@@ -100,12 +100,12 @@ find /var/www/html_wtc -type f -exec chmod 644 {} + -o -type d -exec chmod 755 {
   echo "  CustomLog /var/log/apache2/${SITE_URL}.access.log combined"
   echo
   echo "  # Check a HTTP header for our custom CloudFront header to allow only connections from CloudFront"
-  echo "  <If \"%{HTTP:${WTC_HEADER}} in { '${WTC_HEADER_VALUE}' }\">"
-  echo "    Require all granted"
-  echo "  </If>"
-  echo "  <Else>"
-  echo "    Require all denied"
-  echo "  </Else>"
+  echo "  #<If \"%{HTTP:${WTC_HEADER}} in { '${WTC_HEADER_VALUE}' }\">"
+  echo "  #  Require all granted"
+  echo "  #</If>"
+  echo "  #<Else>"
+  echo "  #  Require all denied"
+  echo "  #</Else>"
   echo
   echo "  # Load the site if the header passes"
   echo "  <Directory /var/www/${SITE_URL}>"
@@ -226,7 +226,8 @@ EOF
   echo ""
   echo "  #Set the VPC DNS server and disable IPv6 so the upstream endpoing is resolved for every proxy pass"
   echo "  resolver 1.1.1.1 8.8.8.8 ipv6=off;"
-  echo "  set \$upstream_endpoint $PROXY_PASS;"
+  echo "  #set \$upstream_endpoint $PROXY_PASS;"
+  echo "  set \$upstream_endpoint 127.0.0.1:8080;"
   echo ""
   echo "  location ^~ /.well-known {"
   echo "    allow all;"
@@ -261,8 +262,10 @@ EOF
       echo "  index index.html index.htm;"
       echo "  client_max_body_size 2048m;"
       echo ""
-      echo "  ssl_certificate /etc/letsencrypt/live/${SITE_URL}/fullchain.pem;"
-      echo "  ssl_certificate_key /etc/letsencrypt/live/${SITE_URL}/privkey.pem;"
+      echo "  #ssl_certificate /etc/letsencrypt/live/${SITE_URL}/fullchain.pem;"
+      echo "  #ssl_certificate_key /etc/letsencrypt/live/${SITE_URL}/privkey.pem;"
+      echo "  ssl_certificate /etc/ssl/certs/ssl-cert-snakeoil.pem;"
+      echo "  ssl_certificate_key /etc/ssl/private/ssl-cert-snakeoil.key;"
       echo "  ssl_session_cache shared:SSL:50m;"
       echo "  ssl_session_tickets off;"
       echo "  ssl_protocols TLSv1.2;"
@@ -271,7 +274,8 @@ EOF
       echo ""
       echo "  #Set the VPC DNS server and disable IPv6 so the upstream endpoing is resolved for every proxy pass"
       echo "  resolver 1.1.1.1 8.8.8.8 ipv6=off;"
-      echo "  set \$upstream_endpoint $PROXY_PASS;"
+      echo "  #set \$upstream_endpoint $PROXY_PASS;"
+      echo "  set \$upstream_endpoint 127.0.0.1:8080;"
       echo ""
       echo "  location ^~ /.well-known {"
       echo "    allow all;"
@@ -279,7 +283,8 @@ EOF
       echo "  }"
       echo ""
       echo "  location / {"
-      echo "    proxy_pass https://\$upstream_endpoint;"
+      echo "    #proxy_pass https://\$upstream_endpoint;"
+      echo "    proxy_pass http://\$upstream_endpoint;"
       echo "    proxy_ssl_protocols TLSv1.2;"
       echo "    proxy_ssl_server_name on;"
       echo "    proxy_ssl_name    \$proxy_host;"
@@ -298,13 +303,6 @@ EOF
       echo "}"
   fi
 } > /etc/nginx/conf.d/${SITE_URL}.conf
-
-
-#----------------- Create a temporary certificate so NGINX can start
-if [ "$SSL_ENABLED" ]; then
-  cp /etc/ssl/certs/ssl-cert-snakeoil.pem /etc/letsencrypt/live/${SITE_URL}/fullchain.pem
-  cp /etc/ssl/private/ssl-cert-snakeoil.key /etc/letsencrypt/live/${SITE_URL}/privkey.pem
-fi
 
 
 #----------------- PHP adjustments
@@ -330,7 +328,6 @@ docker run --network host --name nginx --restart always -v /root/certs-data:/dat
 
 #----------------- Create the certbot command scripts
 {
-  echo "rm -rf /etc/letsencrypt/live/${SITE_URL}"
   echo "certbot certonly --webroot -w /root/certs-data/ \\"
   echo "  --allow-subset-of-names \\"
   echo "  --keep-until-expiring \\"
@@ -358,8 +355,7 @@ chmod +x /root/wtc_certbot_dryrun.sh
   echo "   $(printf " -d %s" "${SITE_ALIASES[@]}")"
   echo "else"
   echo "  echo 'The /etc/letsencrypt/live/${SITE_URL} folder exists.'"
-  echo "  echo 'If this is the first time this has run on this machine, use the wtc_certbot_dryrun.sh script first.'"
-  echo "  echo 'Otherwise, you should use certbot renew command to keep from jacking up the Lets Encrypt directories.'"
+  echo "  echo 'You should use certbot renew command to keep from jacking up the Lets Encrypt directories.'"
   echo "fi"
 } > /root/wtc_certbot_live.sh
 
