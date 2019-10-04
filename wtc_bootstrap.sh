@@ -37,9 +37,6 @@ mkdir -p /etc/apache2/sites-enabled
 mkdir -p /etc/nginx/conf.d
 mkdir -p /root/.aws
 mkdir -p /etc/php/conf.d
-if [ "$SSL_ENABLED" ]; then
-  mkdir -p /etc/letsencrypt/live/${SITE_URL}
-fi
 
 
 #----------------- Create the aws credentials file and config
