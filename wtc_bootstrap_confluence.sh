@@ -62,8 +62,6 @@ docker run --network host --name proftpd --restart always -e PROFTPD_MASQUERADE_
 #docker run --network host --name postfix --restart always -d ${DOCKER_REGISTRY}/postfix
 docker run --name confluence --restart always \
   -p 8090:8090 -p 8091:8091 \
-  #-e ATL_PROXY_NAME=${ATL_PROXY_NAME} \
-  #-e ATL_PROXY_PORT=${ATL_PROXY_PORT} \
   -e ATL_JDBC_URL=${ATL_JDBC_URL} \
   -e ATL_JDBC_USER=${ATL_JDBC_USER} \
   -e ATL_JDBC_PASSWORD=${ATL_JDBC_PASSWORD} \
@@ -71,3 +69,6 @@ docker run --name confluence --restart always \
   -v ${CONFLUENCE_HOME}:/var/atlassian/application-data/confluence \
   -v /etc/mysql/connector/mysql-connector-java-5.1.48.jar:/opt/atlassian/confluence/lib/mysql-connector-java-5.1.48.jar \
   -d atlassian/confluence-server:${CONFLUENCE_VERSION}
+
+  #-e ATL_PROXY_NAME=${ATL_PROXY_NAME} \
+  #-e ATL_PROXY_PORT=${ATL_PROXY_PORT} \
