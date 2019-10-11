@@ -53,8 +53,8 @@ $(aws ecr get-login --no-include-email --region us-east-1)
 
 
 #----------------- Get the MySQL Drivers
-curl -sLOH 'Cache-Control: no-cache' 'https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.48.tar.gz' -o 'mysql-connector.tar.gz';
-tar -xvf mysql-connector.tar.gz -C /etc/mysql/connector;
+curl -sLOH 'Cache-Control: no-cache' 'https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.48.tar.gz';
+tar -xvf mysql-connector-java-5.1.48.tar.gz -C /etc/mysql/connector;
 
 
 #----------------- Launch docker containers
