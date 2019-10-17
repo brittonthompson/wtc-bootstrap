@@ -8,7 +8,8 @@ fi
 #----------------- Install applications
 export DEBIAN_FRONTEND=noninteractive
 apt update -y
-apt install -y docker.io python3 python3-pip certbot awscli git ssl-cert jq monit
+add-apt-repository ppa:certbot/certbot -y
+apt install -y docker.io python3 python3-pip awscli git ssl-cert jq monit software-properties-common certbot
 
 
 #----------------- Enable the Docker daemon
