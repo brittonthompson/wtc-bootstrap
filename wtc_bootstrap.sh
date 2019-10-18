@@ -262,6 +262,8 @@ EOF
       echo ""
       echo "  #ssl_certificate /etc/letsencrypt/live/${SITE_URL}/fullchain.pem;"
       echo "  #ssl_certificate_key /etc/letsencrypt/live/${SITE_URL}/privkey.pem;"
+      echo "  #ssl_certificate /etc/letsencrypt/fullchain.pem;"
+      echo "  #ssl_certificate_key /etc/letsencrypt/privkey.pem;"
       echo "  ssl_certificate /etc/ssl/certs/ssl-cert-snakeoil.pem;"
       echo "  ssl_certificate_key /etc/ssl/private/ssl-cert-snakeoil.key;"
       echo "  ssl_session_cache shared:SSL:50m;"
