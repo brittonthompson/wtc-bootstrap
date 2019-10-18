@@ -108,7 +108,7 @@ find /var/www/html_wtc -type f -exec chmod 644 {} + -o -type d -exec chmod 755 {
   echo "  # Load the site if the header passes"
   echo "  <Directory /var/www/${SITE_URL}>"
   echo "    Options FollowSymLinks MultiViews"
-  echo "    AllowOverride FileInfo Limit"
+  echo "    AllowOverride FileInfo Limit Options Indexes"
   echo "    Order allow,deny"
   echo "    allow from all"
   echo "  </Directory>"
