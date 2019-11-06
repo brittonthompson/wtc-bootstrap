@@ -378,6 +378,7 @@ if [ -e ~/wtc_envs.sh ]; then
   . wtc_envs.sh
   echo " -- SITE_URL=${SITE_URL}"
   echo " -- ACM_ARN=${ACM_ARN}"
+  echo " -- ACM_ARN_ADD=${ACM_ARN_ADD}"
 fi
 
 echo " -- Certificate update"
@@ -388,7 +389,7 @@ if [ "$ACM_ARN" ]; then
     --certificate file:///etc/letsencrypt/live/${SITE_URL}/cert.pem \
     --private-key file:///etc/letsencrypt/live/${SITE_URL}/privkey.pem \
     --certificate-chain file:///etc/letsencrypt/live/${SITE_URL}/chain.pem
-else
+elif [ "$ACM_ARN_ADD" ]; then
   echo " -- Adding certificate to ACM"
   arn=`aws acm import-certificate \
     --certificate file:///etc/letsencrypt/live/${SITE_URL}/cert.pem \
@@ -406,8 +407,8 @@ else
   fi
 fi
 
-echo " -- Restarting NGINX"
-docker restart nginx
+echo " -- Reloading NGINX"
+docker container exec nginx nginx -s reload
 EOF
 
 chmod +x /root/wtc_acm_import.sh
@@ -416,6 +417,7 @@ chmod +x /root/wtc_acm_import.sh
   echo "#!/bin/bash"
   echo "SITE_URL=${SITE_URL}"
   echo "ACM_ARN=${ACM_ARN}"
+  echo "ACM_ARN_ADD=${ACM_ARN_ADD}"
 } > /root/wtc_envs.sh
 
 chmod +x /root/wtc_envs.sh
