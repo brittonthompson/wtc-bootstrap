@@ -440,8 +440,8 @@ if [ "$NEW_SITE" ]; then
   cd /var/www
   wget https://wordpress.org/latest.zip
   unzip latest.zip
-  mv wordpress/ ${SITE_URL}/
-  rm -r wordpress
+  mv wordpress/* ${SITE_URL}
+  rm -r wordpress latest.zip
 
   # Add the SSL redirect force if SSL is enabled
   if [ "$SSL_ENABLED" ]; then
