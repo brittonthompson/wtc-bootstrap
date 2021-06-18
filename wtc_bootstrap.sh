@@ -9,7 +9,7 @@ fi
 export DEBIAN_FRONTEND=noninteractive
 apt update -y
 add-apt-repository ppa:certbot/certbot -y
-apt install -y docker.io python3 python3-pip awscli git ssl-cert jq monit software-properties-common certbot
+apt install -y docker.io python3 python3-pip awscli git ssl-cert jq monit software-properties-common certbot unzip
 
 
 #----------------- Enable the Docker daemon
@@ -362,6 +362,7 @@ chmod +x /root/wtc_certbot_dryrun.sh
 chmod +x /root/wtc_certbot_live.sh
 
 echo 'echo "0 */12 * * * certbot renew" | crontab -' > /root/wtc_certbot_schedule.sh
+echo 'echo "0 */13 * * * docker container exec nginx nginx -s reload" | crontab -' > /root/wtc_certbot_schedule.sh
 
 chmod +x /root/wtc_certbot_schedule.sh
 
@@ -435,10 +436,23 @@ echo "export SITE_ALIASES=($(echo ${SITE_ALIASES[@]}))" >> ~/.bashrc
 
 #----------------- New site setup
 if [ "$NEW_SITE" ]; then
-  #Establishing a new site, copy over the Wordpress files
-  rsync -au /var/www/html/ /var/www/${SITE_URL}
+  #Establishing a new site download and install Wordpress
+  cd /var/www
+  wget https://wordpress.org/latest.zip
+  unzip latest.zip
+  mv wordpress/ ${SITE_URL}/
+  rm -r wordpress
+
+  # Add the SSL redirect force if SSL is enabled
+  if [ "$SSL_ENABLED" ]; then
+    sed -i "s/\/\*\* Sets up WordPress vars and included files. \*\//\$_SERVER['HTTPS'] = 'on';\n\n\/\*\* Sets up WordPress vars and included files. \*\//g" /var/www/${SITE_URL}/wp-config-sample.php
+  fi
 
   #Update the permissions for the copied data
   chown -R www-data:www-data /var/www/${SITE_URL}
   find /var/www/${SITE_URL} -type f -exec chmod 644 {} + -o -type d -exec chmod 755 {} +
+
+  # Restart Apache and NGINX
+  docker container exec nginx nginx -s reload
+  docker container exec wordpress service apache2 reload
 fi
