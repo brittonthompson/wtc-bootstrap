@@ -9,7 +9,7 @@ fi
 export DEBIAN_FRONTEND=noninteractive
 apt update -y
 add-apt-repository ppa:certbot/certbot -y
-apt install -y docker.io python3 python3-pip awscli git ssl-cert jq monit software-properties-common certbot unzip
+apt install -y docker.io python3 python3-pip awscli git ssl-cert jq monit software-properties-common certbot unzip mysql-client
 
 
 #----------------- Enable the Docker daemon
@@ -455,4 +455,13 @@ if [ "$NEW_SITE" ]; then
   # Restart Apache and NGINX
   docker container exec nginx nginx -s reload
   docker container exec wordpress service apache2 reload
+
+  # If we have an admin pass go ahead and run the database operations
+  if [ -n ${DESTINATION_DBADMIN+x} ]; then 
+    # Created the proftpd user
+    mysql -h $DESTINATION_DBSERVER -u $DESTINATION_DBADMIN -p$DESTINATION_DBADMINPASS -e "USE proftpd; INSERT INTO \`users\` (\`id\`, \`userid\`, \`passwd\`, \`uid\`, \`gid\`, \`homedir\`, \`shell\`, \`last_accessed\`, \`login_allowed\`, \`count\`) VALUES (NULL, '${SHORTNAME}', ENCRYPT('${FTP_PASS}'), '33', '33', '/var/www/${SITE}', '/sbin/nologin', '2019-10-04 15:04:06', 'true', '0');"
+    
+    # Created the Wordpress database and user
+    mysql -h $DESTINATION_DBSERVER -u $DESTINATION_DBADMIN -p$DESTINATION_DBADMINPASS -e "CREATE DATABASE IF NOT EXISTS ${DESTINATION_DB}; GRANT ALL ON ${DESTINATION_DB}.* TO '${DESTINATION_DB}'@'%' IDENTIFIED BY '${DESTINATION_DBPASS}'; FLUSH PRIVILEGES;"
+  fi
 fi
